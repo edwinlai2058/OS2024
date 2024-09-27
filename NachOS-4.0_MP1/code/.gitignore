@@ -1,0 +1,70 @@
+# root
+DISK_0
+
+.vscode/*
+!.vscode/c_cpp_properties.json
+!.vscode/settings.json
+
+*.o
+
+# build.cygwin
+build.cygwin/*
+!build.cygwin/Makefile
+!build.cygwin/Makefile.dep
+# build.linux
+build.linux/*
+!build.linux/Makefile
+!build.linux/Makefile.dep
+# build.macosx
+build.macosx/*
+!build.macosx/Makefile
+!build.macosx/Makefile.dep
+# filesys
+filesys/*
+!filesys/*.cc
+!filesys/*.h
+# lib
+lib/*
+!lib/*.cc
+!lib/*.h
+# machine
+machine/*
+!machine/*.cc
+!machine/*.h
+# network
+network/*
+!network/*.cc
+!network/*.h
+# test
+test/*
+!test/Makefile
+!test/Makefile.dep
+!test/*.S
+!test/*.c
+!test/*.h
+!test/script
+!test/build_nachos.sh
+!test/build_nachos_docker.sh
+
+!test/hw3_all.sh
+!test/hw3_partA.sh
+!test/hw3_ans
+
+!test/hw4_all.sh
+!test/hw4_partII_a.sh
+!test/hw4_partII_b.sh
+!test/hw4_partIII.sh
+!test/hw4_ans
+!test/num_100.txt
+!test/num_1000.txt
+
+# threads
+threads/*
+!threads/*.S
+!threads/*.cc
+!threads/*.h
+# userprog
+userprog/*
+!userprog/*.S
+!userprog/*.cc
+!userprog/*.h

@@ -1,0 +1,160 @@
+===== Start testcases =====
+===== Test case 1: -ep hw3t1 0 -ep hw3t2 0 -ee  =====
+1
+2
+1
+2
+1
+2
+1
+2
+1
+2
+1
+2
+1
+2
+1
+2
+1
+2
+return value:1
+return value:2
+===== Test case 2: -ep hw3t1 50 -ep hw3t2 50 -ee  =====
+1
+1
+1
+1
+1
+1
+1
+1
+1
+return value:1
+2
+2
+2
+2
+2
+2
+2
+2
+2
+return value:2
+===== Test case 3: -ep hw3t1 50 -ep hw3t2 90 -ee  =====
+2
+2
+2
+2
+2
+2
+2
+2
+2
+return value:2
+1
+1
+1
+1
+1
+1
+1
+1
+1
+return value:1
+===== Test case 4: -ep hw3t1 100 -ep hw3t2 100 -ee  =====
+1
+1
+2
+2
+2
+1
+1
+1
+1
+2
+2
+2
+2
+1
+1
+1
+return value:1
+2
+2
+return value:2
+===== Test case 5: -ep hw3t1 40 -ep hw3t2 55 -ee  =====
+2
+2
+2
+2
+2
+2
+2
+2
+2
+return value:2
+1
+1
+1
+1
+1
+1
+1
+1
+1
+return value:1
+===== Test case 6: -ep hw3t1 40 -ep hw3t2 90 -ee  =====
+2
+2
+2
+2
+2
+2
+2
+2
+2
+return value:2
+1
+1
+1
+1
+1
+1
+1
+1
+1
+return value:1
+===== Test case 7: -ep hw3t1 90 -ep hw3t2 100 -ee  =====
+2
+2
+2
+2
+2
+2
+2
+2
+2
+return value:2
+1
+1
+1
+1
+1
+1
+1
+1
+1
+return value:1
+===== Test case 8: -ep hw3t1 60 -ep hw3t3 50 -ee  =====
+1return value:3
+
+1
+1
+1
+1
+1
+1
+1
+1
+return value:1
