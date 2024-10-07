@@ -57,6 +57,56 @@ void ExceptionHandler(ExceptionType which) {
     switch (which) {
         case SyscallException:
             switch (type) {
+                //Start of my MP1 implementation
+                case SC_Open:
+                    val = kernel->machine->ReadRegister(4);
+                    {
+                        char *filename = &(kernel->machine->mainMemory[val]);
+                        fileID = SysOpen(filename);
+                        kernel->machine->WriteRegister(2, (int)fileID);
+                    }
+                    kernel->machine->WriteRegister(PrevPCReg, kernel->machine->ReadRegister(PCReg));
+                    kernel->machine->WriteRegister(PCReg, kernel->machine->ReadRegister(PCReg) + 4);
+                    kernel->machine->WriteRegister(NextPCReg, kernel->machine->ReadRegister(PCReg) + 4);
+                    break;
+                case SC_Write:
+                    val = kernel->machine->ReadRegister(4);
+                    numChar = kernel->machine->ReadRegister(5);
+                    fileID = kernel->machine->ReadRegister(6);
+                    {
+                        char *buffer = &(kernel->machine->mainMemory[val]);
+                        status = SysWrite(buffer, numChar, fileID);
+                        kernel->machine->WriteRegister(2, (int)status);
+                    }
+                    kernel->machine->WriteRegister(PrevPCReg, kernel->machine->ReadRegister(PCReg));
+                    kernel->machine->WriteRegister(PCReg, kernel->machine->ReadRegister(PCReg) + 4);
+                    kernel->machine->WriteRegister(NextPCReg, kernel->machine->ReadRegister(PCReg) + 4);
+                    break;
+                case SC_Read:
+                    val = kernel->machine->ReadRegister(4);
+                    numChar = kernel->machine->ReadRegister(5);
+                    fileID = kernel->machine->ReadRegister(6);
+                    {
+                        char *buffer = &(kernel->machine->mainMemory[val]);
+                        status = SysRead(buffer, numChar, fileID);
+                        kernel->machine->WriteRegister(2, (int)status);
+                    }
+                    kernel->machine->WriteRegister(PrevPCReg, kernel->machine->ReadRegister(PCReg));
+                    kernel->machine->WriteRegister(PCReg, kernel->machine->ReadRegister(PCReg) + 4);
+                    kernel->machine->WriteRegister(NextPCReg, kernel->machine->ReadRegister(PCReg) + 4);
+                    break;
+                case SC_Close:
+                    fileID = kernel->machine->ReadRegister(4);
+                    {
+                        status = SysClose(fileID);
+                        kernel->machine->WriteRegister(2, (int)status);
+                    }
+                    kernel->machine->WriteRegister(PrevPCReg, kernel->machine->ReadRegister(PCReg));
+                    kernel->machine->WriteRegister(PCReg, kernel->machine->ReadRegister(PCReg) + 4);
+                    kernel->machine->WriteRegister(NextPCReg, kernel->machine->ReadRegister(PCReg) + 4);
+                    break;
+                //End of my MP1 implementation
+
                 case SC_Halt:
                     DEBUG(dbgSys, "Shutdown, initiated by user program.\n");
                     SysHalt();

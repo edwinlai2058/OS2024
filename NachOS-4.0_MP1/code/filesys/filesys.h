@@ -65,16 +65,36 @@ class FileSystem {
         return new OpenFile(fileDescriptor);
     }
 
-    //  The OpenAFile function is used for kernel open system call
-    /*  OpenFileId OpenAFile(char *name) {
+    // The OpenAFile function is used for kernel open system call
+    // Start of my MP1 implementation
+    OpenFileId OpenAFile(char *name) {
+        //open file limit is 20
+        int idx = 0;
+        while (OpenFileTable[idx] != NULL) idx++;
+        if(idx >= 20) return -1;
+        else {
+            int fileDescriptor = OpenForReadWrite(name, FALSE);
+            if (fileDescriptor == -1) return -1;
+
+            OpenFileTable[idx] = new OpenFile(fileDescriptor);
+            return idx;
         }
-        int WriteFile(char *buffer, int size, OpenFileId id){
-        }
-        int ReadFile(char *buffer, int size, OpenFileId id){
-        }
-        int CloseFile(OpenFileId id){
-        }
-    */
+    }
+    int WriteFile(char *buffer, int size, OpenFileId id) {
+        if(id < 0 || id >= 20 || OpenFileTable[id] == NULL) return -1;
+        return OpenFileTable[id]->Write(buffer, size);
+    }
+    int ReadFile(char *buffer, int size, OpenFileId id) {
+        if(id < 0 || id >= 20 || OpenFileTable[id] == NULL) return -1;
+        return OpenFileTable[id]->Read(buffer, size);
+    }
+    int CloseFile(OpenFileId id) {
+        if(id < 0 || id >= 20 || OpenFileTable[id] == NULL) return -1;
+        delete OpenFileTable[id];
+        OpenFileTable[id] = NULL;
+        return 1;
+    }
+    // End of my MP1 implementation
 
     bool Remove(char *name) { return Unlink(name) == 0; }
 
