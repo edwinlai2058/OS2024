@@ -68,6 +68,7 @@ void ExceptionHandler(ExceptionType which) {
                     kernel->machine->WriteRegister(PrevPCReg, kernel->machine->ReadRegister(PCReg));
                     kernel->machine->WriteRegister(PCReg, kernel->machine->ReadRegister(PCReg) + 4);
                     kernel->machine->WriteRegister(NextPCReg, kernel->machine->ReadRegister(PCReg) + 4);
+                    return;
                     break;
                 case SC_Write:
                     val = kernel->machine->ReadRegister(4);
@@ -81,6 +82,7 @@ void ExceptionHandler(ExceptionType which) {
                     kernel->machine->WriteRegister(PrevPCReg, kernel->machine->ReadRegister(PCReg));
                     kernel->machine->WriteRegister(PCReg, kernel->machine->ReadRegister(PCReg) + 4);
                     kernel->machine->WriteRegister(NextPCReg, kernel->machine->ReadRegister(PCReg) + 4);
+                    return;
                     break;
                 case SC_Read:
                     val = kernel->machine->ReadRegister(4);
@@ -94,6 +96,7 @@ void ExceptionHandler(ExceptionType which) {
                     kernel->machine->WriteRegister(PrevPCReg, kernel->machine->ReadRegister(PCReg));
                     kernel->machine->WriteRegister(PCReg, kernel->machine->ReadRegister(PCReg) + 4);
                     kernel->machine->WriteRegister(NextPCReg, kernel->machine->ReadRegister(PCReg) + 4);
+                    return;
                     break;
                 case SC_Close:
                     fileID = kernel->machine->ReadRegister(4);
@@ -104,6 +107,7 @@ void ExceptionHandler(ExceptionType which) {
                     kernel->machine->WriteRegister(PrevPCReg, kernel->machine->ReadRegister(PCReg));
                     kernel->machine->WriteRegister(PCReg, kernel->machine->ReadRegister(PCReg) + 4);
                     kernel->machine->WriteRegister(NextPCReg, kernel->machine->ReadRegister(PCReg) + 4);
+                    return;
                     break;
                 //End of my MP1 implementation
 

@@ -70,13 +70,17 @@ class FileSystem {
     OpenFileId OpenAFile(char *name) {
         //open file limit is 20
         int idx = 0;
-        while (OpenFileTable[idx] != NULL) idx++;
+        while (OpenFileTable[idx] != NULL) {
+            if(fname[idx] == name)  return -1;
+            idx++;
+        }
         if(idx >= 20) return -1;
         else {
             int fileDescriptor = OpenForReadWrite(name, FALSE);
             if (fileDescriptor == -1) return -1;
 
             OpenFileTable[idx] = new OpenFile(fileDescriptor);
+            fname[idx] = name;
             return idx;
         }
     }
@@ -99,6 +103,8 @@ class FileSystem {
     bool Remove(char *name) { return Unlink(name) == 0; }
 
     OpenFile *OpenFileTable[20];
+    // filename array
+    char* fname[20];
 };
 
 #else  // FILESYS
