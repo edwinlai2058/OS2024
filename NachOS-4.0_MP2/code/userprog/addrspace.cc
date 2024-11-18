@@ -63,7 +63,7 @@ SwapHeader(NoffHeader *noffH) {
 //----------------------------------------------------------------------
 
 AddrSpace::AddrSpace() {
-    pageTable = new TranslationEntry[NumPhysPages];
+    pageTable = new TranslationEntry[NumPhysPages];     // Load to kernel in RestoreState()
     for (int i = 0; i < NumPhysPages; i++) {
         pageTable[i].virtualPage = i;  // for now, virt page # = phys page #
         pageTable[i].physicalPage = i;

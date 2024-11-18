@@ -359,7 +359,7 @@ SWITCH:
 
         movl    _EAX(%eax),%ebx         # get new value for eax into ebx
         movl    %ebx,_eax_save          # save it
-        movl    _EBX(%eax),%ebx         # retore old registers
+        movl    _EBX(%eax),%ebx         # restore old registers
         movl    _ECX(%eax),%ecx
         movl    _EDX(%eax),%edx
         movl    _ESI(%eax),%esi
