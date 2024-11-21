@@ -29,3 +29,5 @@ COPY coff2noff /nachos/coff2noff
 WORKDIR /nachos/code/test
 
 ENTRYPOINT [ "/bin/bash" ]
+
+ENV PATH="../build.linux:${PATH}"

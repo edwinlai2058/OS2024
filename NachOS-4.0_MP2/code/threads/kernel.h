@@ -72,6 +72,10 @@ class Kernel {
 
     int hostName;  // machine identifier
 
+    // Used to track the number of physical pages used (MP2)
+    bool usedPhysPage[NumPhysPages];
+    int freeFrameNum;
+
    private:
     Thread *t[10];
     char *execfile[10];

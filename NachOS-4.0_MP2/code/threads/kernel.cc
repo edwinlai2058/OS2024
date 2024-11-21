@@ -108,6 +108,10 @@ void Kernel::Initialize() {
     synchConsoleIn = new SynchConsoleInput(consoleIn);     // input from stdin
     synchConsoleOut = new SynchConsoleOutput(consoleOut);  // output to stdout
     synchDisk = new SynchDisk();                           //
+
+    // Virtual memory initialization (MP2)
+    bzero(usedPhysPage, NumPhysPages * sizeof(bool));
+    freeFrameNum = NumPhysPages;
 #ifdef FILESYS_STUB
     fileSystem = new FileSystem();
 #else
