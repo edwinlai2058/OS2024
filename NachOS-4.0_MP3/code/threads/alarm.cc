@@ -46,8 +46,14 @@ Alarm::Alarm(bool doRandom) {
 void Alarm::CallBack() {
     Interrupt *interrupt = kernel->interrupt;
     MachineStatus status = interrupt->getStatus();
+    Scheduler *scheduler = kernel->scheduler;
+    // MP3
+    scheduler->UpdateThreadAging(); // 更新所有thread的aging time
+    
 
     if (status != IdleMode) {
-        interrupt->YieldOnReturn();
+        int currentQueueLevel = kernel->currentThread->getQueueLevel();
+        if(!scheduler->L1->IsEmpty() || currentQueueLevel == 3 || currentQueueLevel == 1)
+            interrupt->YieldOnReturn();
     }
 }

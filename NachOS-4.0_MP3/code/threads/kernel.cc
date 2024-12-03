@@ -53,6 +53,14 @@ Kernel::Kernel(int argc, char **argv) {
             // Added by @dasbd72
             // To end the program after all the threads are done
             execExit = TRUE;
+        } else if (strcmp(argv[i], "-ep") == 0) {
+            // To set the priority of the thread (MP3)
+            ASSERT(i + 2 < argc);
+            execfile[++execfileNum] = argv[++i];
+            int priority = atoi(argv[++i]);
+            ASSERT(priority >= 0 && priority < 150);
+            execPriority[execfileNum] = priority;
+            //cout << "Priority of " << execfile[execfileNum] << ": " << execPriority[execfileNum] << "\n";
         } else if (strcmp(argv[i], "-ci") == 0) {
             ASSERT(i + 1 < argc);
             consoleIn = argv[i + 1];
@@ -109,17 +117,14 @@ void Kernel::Initialize() {
     synchConsoleOut = new SynchConsoleOutput(consoleOut);  // output to stdout
     synchDisk = new SynchDisk();                           //
 
-    // Virtual memory initialization (MP2)
-    bzero(usedPhysPage, NumPhysPages * sizeof(bool));
-    freeFrameNum = NumPhysPages;
-    
 #ifdef FILESYS_STUB
     fileSystem = new FileSystem();
 #else
     fileSystem = new FileSystem(formatFlag);
 #endif  // FILESYS_STUB
-    postOfficeIn = new PostOfficeInput(10);
-    postOfficeOut = new PostOfficeOutput(reliability);
+    // (MP3)
+    // postOfficeIn = new PostOfficeInput(10);
+    // postOfficeOut = new PostOfficeOutput(reliability);
 
     interrupt->Enable();
 }
@@ -139,8 +144,10 @@ Kernel::~Kernel() {
     delete synchConsoleOut;
     delete synchDisk;
     delete fileSystem;
-    delete postOfficeIn;
-    delete postOfficeOut;
+
+    // (MP3)
+    // delete postOfficeIn;
+    // delete postOfficeOut;
 
     Exit(0);
 }
@@ -259,43 +266,20 @@ void ForkExecute(Thread *t) {
 
 void Kernel::ExecAll() {
     for (int i = 1; i <= execfileNum; i++) {
-        int a = Exec(execfile[i]);
+        int a = Exec(execfile[i], execPriority[i]);
     }
     currentThread->Finish();
     // Kernel::Exec();
 }
 
-int Kernel::Exec(char *name) {
+// add priority parameter in MP3
+int Kernel::Exec(char *name, int priority) {
     t[threadNum] = new Thread(name, threadNum);
     t[threadNum]->setIsExec();
     t[threadNum]->space = new AddrSpace();
+    t[threadNum]->setPriority(priority);
     t[threadNum]->Fork((VoidFunctionPtr)&ForkExecute, (void *)t[threadNum]);
     threadNum++;
 
     return threadNum - 1;
-    /*
-        cout << "Total threads number is " << execfileNum << endl;
-        for (int n=1;n<=execfileNum;n++) {
-                    t[n] = new Thread(execfile[n]);
-                    t[n]->space = new AddrSpace();
-                    t[n]->Fork((VoidFunctionPtr) &ForkExecute, (void *)t[n]);
-                    cout << "Thread " << execfile[n] << " is executing." << endl;
-            }
-            cout << "debug Kernel::Run finished.\n";
-    */
-    //  Thread *t1 = new Thread(execfile[1]);
-    //  Thread *t1 = new Thread("../test/test1");
-    //  Thread *t2 = new Thread("../test/test2");
-
-    //    AddrSpace *halt = new AddrSpace();
-    //  t1->space = new AddrSpace();
-    //  t2->space = new AddrSpace();
-
-    //    halt->Execute("../test/halt");
-    //  t1->Fork((VoidFunctionPtr) &ForkExecute, (void *)t1);
-    //  t2->Fork((VoidFunctionPtr) &ForkExecute, (void *)t2);
-
-    //	currentThread->Finish();
-    //    Kernel::Run();
-    //  cout << "after ThreadedKernel:Run();" << endl;  // unreachable
 }

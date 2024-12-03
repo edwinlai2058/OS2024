@@ -176,7 +176,6 @@ bool Machine::WriteMem(int addr, int size, int value) {
 // 	"writing" -- if TRUE, check the "read-only" bit in the TLB
 //----------------------------------------------------------------------
 
-// Use pointer to store the physAddr because we need to change the value of physAddr
 ExceptionType
 Machine::Translate(int virtAddr, int *physAddr, int size, bool writing) {
     int i;
@@ -238,9 +237,7 @@ Machine::Translate(int virtAddr, int *physAddr, int size, bool writing) {
     entry->use = TRUE;  // set the use, dirty bits
     if (writing)
         entry->dirty = TRUE;
-
     *physAddr = pageFrame * PageSize + offset;
-    
     ASSERT((*physAddr >= 0) && ((*physAddr + size) <= MemorySize));
     DEBUG(dbgAddr, "phys addr = " << *physAddr);
     return NoException;

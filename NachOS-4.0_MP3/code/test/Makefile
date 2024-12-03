@@ -112,7 +112,7 @@ ifeq ($(hosttype),unknown)
 PROGRAMS = unknownhost
 else
 # change this if you create a new test program!
-PROGRAMS = add halt createFile LotOfAdd fileIO_test1 fileIO_test2 consoleIO_test1 consoleIO_test2
+PROGRAMS = add halt LotOfAdd hw3t1 hw3t2 hw3t3
 endif
 
 all: $(PROGRAMS)
@@ -229,6 +229,13 @@ hw4t2.o: hw4t2.c
 hw4t2: hw4t2.o start.o
 	$(LD) $(LDFLAGS) start.o hw4t2.o -o hw4t2.coff
 	$(COFF2NOFF) hw4t2.coff hw4t2
+
+test.o: test.c
+	$(CC) $(CFLAGS) -c test.c
+test: test.o start.o
+	$(LD) $(LDFLAGS) start.o test.o -o test.coff
+	$(COFF2NOFF) test.coff test
+
 
 clean:
 	$(RM) -f *.o *.ii

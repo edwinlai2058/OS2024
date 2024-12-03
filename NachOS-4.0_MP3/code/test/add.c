@@ -11,7 +11,7 @@ int main() {
 
     result = Add(42, 23);
     PrintInt(result);
-    // SysHalt() is in the end of MSG()
     MSG("add~~~~");
+    Halt();
     /* not reached */
 }

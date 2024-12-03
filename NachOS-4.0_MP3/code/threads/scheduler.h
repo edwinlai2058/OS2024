@@ -32,13 +32,28 @@ class Scheduler {
                                 // running needs to be deleted
     void Print();               // Print contents of ready list
 
+    // MP3
+
+    void addToQueue(Thread* thread, List<Thread*>* queue, int queueLevel);
+    Thread* removeFromQueue(Thread* thread, List<Thread*>* queue, int queueLevel);
+    
+    void UpdateThreadAging(); // 更新所有thread的aging
+    bool IsL1NeedToPreempt(); // 判斷L1 queue是否需要preempt
+
+    List<Thread*>* L1;
+    List<Thread*>* L2;
+    List<Thread*>* L3;
+
     // SelfTest for scheduler is implemented in class Thread
 
    private:
     List<Thread*>* readyList;  // queue of threads that are ready to run,
                                // but not running
+
     Thread* toBeDestroyed;     // finishing thread to be destroyed
                                // by the next thread that runs
+      // MP3
+    void UpdateAgeInQueue(List<Thread*>* queue, int queueLevel);   // 更新所有thread在queue中的aging
 };
 
 #endif  // SCHEDULER_H

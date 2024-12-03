@@ -104,6 +104,30 @@ class Thread {
     ThreadStatus getStatus() { return (status); }
     char *getName() { return (name); }
 
+    // MP3
+    void setPriority(int p) { priority = p; }
+    int getPriority() { return (priority); }
+    void UpdatePriority();
+
+    int getRemainBurstTime() { return (remainBurstTime); }
+    void UpdateRemainBurstTime();
+
+    double getBurstTime() { return (burstTime); }
+    void UpdateBurstTime();
+
+    double getApproxBurstTime() { return (approxBurstTime); }
+    void UpdateApproxBurstTime();
+
+    int getInitRunningTick() { return (initRunningTick); }
+    void UpdateInitRunningTick();
+
+    void setStartAgingTick(int tick) { readyStartTick = tick; } // Set the tick when the thread enters ready queue
+
+    void setQueueLevel(int level) { queueLevel = level; } // Set the queue level
+    int getQueueLevel() { return queueLevel; } // Get the queue level
+
+
+
     int getID() { return (ID); }
     void setIsExec() { this->isExec = true; }
     bool getIsExec() { return (isExec); }
@@ -119,6 +143,18 @@ class Thread {
     ThreadStatus status;  // ready, running or blocked
     char *name;
     int ID;
+
+    // MP3
+    int priority;               // Priority of the thread (between 0 and 149)
+    int queueLevel;             // Which queue the thread is in
+    int initRunningTick;        // The tick when the thread starts running
+
+    double burstTime;           // Burst time (T) of the thread
+    double approxBurstTime;     // Approximate burst time (t_i) of the thread
+    double remainBurstTime;     // Remaining burst time (T - t_i) of the thread
+
+    int readyStartTick;         // The tick when the thread enters ready queue
+    
     bool isExec;  // Is this thread an user executable thread
     void StackAllocate(VoidFunctionPtr func, void *arg);
     // Allocate a stack for thread.

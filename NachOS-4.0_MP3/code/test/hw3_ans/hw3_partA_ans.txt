@@ -68,6 +68,7 @@ return value:1
 2
 2
 2
+2
 1
 1
 1
@@ -80,7 +81,6 @@ return value:1
 1
 1
 return value:1
-2
 2
 return value:2
 ===== Test case 5: -ep hw3t1 40 -ep hw3t2 55 -ee  =====

@@ -141,7 +141,7 @@
 #define _EDI 28
 #define _PC 32
 
-/* These definitions are used in Thread::StackAllocate(). */
+/* These definitions are used in Thread::AllocateStack(). */
 #define PCState (_PC / 4 - 1)
 #define FPState (_EBP / 4 - 1)
 #define InitialPCState (_ESI / 4 - 1)

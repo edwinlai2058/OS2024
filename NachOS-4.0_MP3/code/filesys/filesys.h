@@ -85,15 +85,15 @@ class FileSystem {
         }
     }
     int WriteFile(char *buffer, int size, OpenFileId id) {
-        if(id < 0 || id >= 20 || OpenFileTable[id] == NULL) return -1;
+        if(id < 0 || id >= 20 || !OpenFileTable[id]) return -1;
         return OpenFileTable[id]->Write(buffer, size);
     }
     int ReadFile(char *buffer, int size, OpenFileId id) {
-        if(id < 0 || id >= 20 || OpenFileTable[id] == NULL) return -1;
+        if(id < 0 || id >= 20 || !OpenFileTable[id]) return -1;
         return OpenFileTable[id]->Read(buffer, size);
     }
     int CloseFile(OpenFileId id) {
-        if(id < 0 || id >= 20 || OpenFileTable[id] == NULL) return -1;
+        if(id < 0 || id >= 20 || !OpenFileTable[id]) return -1;
         delete OpenFileTable[id];
         OpenFileTable[id] = NULL;
         return 1;
@@ -103,8 +103,8 @@ class FileSystem {
     bool Remove(char *name) { return Unlink(name) == 0; }
 
     OpenFile *OpenFileTable[20];
-    // filename array
-    char* fname[20];
+    // Array of opened file's filename, need this to handle duplicate opening case
+    char* fname[21];
 };
 
 #else  // FILESYS

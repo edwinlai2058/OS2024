@@ -40,6 +40,9 @@ class AddrSpace {
     // is 0 for Read, 1 for Write.
     ExceptionType Translate(unsigned int vaddr, unsigned int *paddr, int mode);
 
+    static bool usedPhyPage[NumPhysPages]; // 紀錄 physical frame 的使用狀況
+    static int freeFrameNum;               // 紀錄目前有多少 free frame 可以用
+
    private:
     TranslationEntry *pageTable;  // Assume linear page table translation
                                   // for now!

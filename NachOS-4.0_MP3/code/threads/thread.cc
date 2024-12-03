@@ -37,6 +37,19 @@ const int STACK_FENCEPOST = 0xdedbeef;
 Thread::Thread(char *threadName, int threadID) {
     ID = threadID;
     name = threadName;
+
+    // MP3
+    priority = 0;
+    queueLevel = 0;
+    initRunningTick = 0;
+    approxBurstTime = 0.0;
+    burstTime = 0.0;
+    remainBurstTime = 0.0;
+    readyStartTick = 0;
+    //totalAgingTime = 0;
+
+
+
     isExec = false;
     stackTop = NULL;
     stack = NULL;
@@ -205,9 +218,9 @@ void Thread::Yield() {
 
     DEBUG(dbgThread, "Yielding thread: " << name);
 
+    kernel->scheduler->ReadyToRun(this);  // Put currentThread to ready list (MP3)
     nextThread = kernel->scheduler->FindNextToRun();
     if (nextThread != NULL) {
-        kernel->scheduler->ReadyToRun(this);
         kernel->scheduler->Run(nextThread, FALSE);
     }
     (void)kernel->interrupt->SetLevel(oldLevel);
@@ -243,6 +256,12 @@ void Thread::Sleep(bool finishing) {
     DEBUG(dbgTraCode, "In Thread::Sleep, Sleeping thread: " << name << ", " << kernel->stats->totalTicks);
 
     status = BLOCKED;
+
+    // Update the approximated burst time when the thread becomes waiting state, and
+    // return the accumulated T to zero. (MP3)
+    UpdateApproxBurstTime();
+
+
     // cout << "debug Thread::Sleep " << name << "wait for Idle\n";
     while ((nextThread = kernel->scheduler->FindNextToRun()) == NULL) {
         kernel->interrupt->Idle();  // no one to run, wait for an interrupt
@@ -417,4 +436,41 @@ void Thread::SelfTest() {
     t->Fork((VoidFunctionPtr)SimpleThread, (void *)1);
     kernel->currentThread->Yield();
     SimpleThread(0);
+}
+
+// MP3
+void Thread::UpdateInitRunningTick() {
+    initRunningTick = kernel->stats->totalTicks;
+}
+
+void Thread::UpdateApproxBurstTime() {
+    UpdateBurstTime();
+    double newApproxBurstTime = (double)(approxBurstTime * 0.5 + burstTime * 0.5);  // t_i
+    DEBUG('z', "[D] Tick [" << kernel->stats->totalTicks << "]: Thread [" << ID << "] update approximate burst time, from: [" << approxBurstTime << "], add [" << burstTime << "], to: [" << newApproxBurstTime << "]");
+    approxBurstTime = newApproxBurstTime;
+    burstTime = 0.0;
+}
+
+void Thread::UpdateBurstTime() {
+    burstTime += (double)(kernel->stats->totalTicks - initRunningTick);
+}
+
+void Thread::UpdateRemainBurstTime() {
+    UpdateBurstTime();
+    remainBurstTime = approxBurstTime - burstTime;
+    if(remainBurstTime < 0) {
+        remainBurstTime = 0;
+    }
+}
+
+void Thread::UpdatePriority() {
+    int totalAgingTime = kernel->stats->totalTicks - readyStartTick;
+    if(priority < 149 && totalAgingTime > 1500)
+    {
+        int oldPriority = priority;
+        priority += 10;
+        if(priority > 149) priority = 149;
+        DEBUG('z', "[C] Tick [" << kernel->stats->totalTicks << "]: Thread [" << ID << "] changes its priority from [" << oldPriority << "] to [" << priority << "]");
+        readyStartTick = kernel->stats->totalTicks;
+    }
 }

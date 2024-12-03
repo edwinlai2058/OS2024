@@ -42,9 +42,8 @@ __start:
  * -------------------------------------------------------------
  */
 
-// Start of my MP1 implementation
 	.globl Open
-	.ent Open
+	.ent	Open
 Open:
 	addiu $2,$0,SC_Open
 	syscall
@@ -52,7 +51,7 @@ Open:
 	.end Open
 
 	.globl Write
-	.ent Write
+	.ent	Write
 Write:
 	addiu $2,$0,SC_Write
 	syscall
@@ -60,7 +59,7 @@ Write:
 	.end Write
 
 	.globl Read
-	.ent Read
+	.ent	Read
 Read:
 	addiu $2,$0,SC_Read
 	syscall
@@ -68,13 +67,12 @@ Read:
 	.end Read
 
 	.globl Close
-	.ent Close
+	.ent	Close
 Close:
 	addiu $2,$0,SC_Close
 	syscall
 	j	$31
 	.end Close
-// End of my MP1 implementation
 
 	.globl Halt
 	.ent	Halt
@@ -84,13 +82,13 @@ Halt:
 	j	$31
 	.end Halt
 
-        .globl  PrintInt
-        .ent     PrintInt
+    .globl  PrintInt
+    .ent     PrintInt
 PrintInt:
-        addiu $2,$0,SC_PrintInt
-        syscall
-        j       $31
-        .end  PrintInt
+    addiu $2,$0,SC_PrintInt
+    syscall
+    j       $31
+    .end  PrintInt
 
 	.globl MSG
 	.ent   MSG

@@ -22,6 +22,9 @@
 #include "main.h"
 #include "noff.h"
 
+bool AddrSpace::usedPhyPage[NumPhysPages] = {0};  // 初始化所有physical frame為false，表示都是free frame
+int AddrSpace::freeFrameNum = NumPhysPages;      // 初始化所有physical frame都是free frame
+
 //----------------------------------------------------------------------
 // SwapHeader
 // 	Do little endian to big endian conversion on the bytes in the
@@ -64,7 +67,7 @@ SwapHeader(NoffHeader *noffH) {
 
 AddrSpace::AddrSpace() {
     /*
-    pageTable = new TranslationEntry[NumPhysPages];     // Load to kernel in RestoreState()
+    pageTable = new TranslationEntry[NumPhysPages];
     for (int i = 0; i < NumPhysPages; i++) {
         pageTable[i].virtualPage = i;  // for now, virt page # = phys page #
         pageTable[i].physicalPage = i;
@@ -77,7 +80,7 @@ AddrSpace::AddrSpace() {
     // zero out the entire address space
     bzero(kernel->machine->mainMemory, MemorySize);
     */
-    pageTable = NULL;
+   pageTable = NULL;  // 先初始化pageTable為NULL
 }
 
 //----------------------------------------------------------------------
@@ -86,9 +89,9 @@ AddrSpace::AddrSpace() {
 //----------------------------------------------------------------------
 
 AddrSpace::~AddrSpace() {
-    for (int i = 0; i < numPages; i++) {
-        kernel->usedPhysPage[pageTable[i].physicalPage] = false;
-        kernel->freeFrameNum++;
+    for(int i = 0; i < numPages; i++) {
+        usedPhyPage[pageTable[i].physicalPage] = false;  // 將這個thread使用到的physical frame設為 false
+        freeFrameNum++;  // 增加free frame數量
     }
     delete pageTable;
 }
@@ -131,51 +134,61 @@ bool AddrSpace::Load(char *fileName) {
                                                                                            // to leave room for the stack
 #endif
     numPages = divRoundUp(size, PageSize);
-
-    if(numPages > kernel->freeFrameNum) {
-        ExceptionHandler(MemoryLimitException);
+    //cerr << "numPages: " << numPages << "\n";  // 輸出這個thread需要多少個page，來設計測資
+    
+    ExceptionType ex = NoException; // 用來處理exception
+    if(numPages > freeFrameNum)  // 檢查是否有足夠的physical frame可以使用，如果不夠就丟出exception
+    {
+        ex = MemoryLimitException;
+        ExceptionHandler(ex);  // 丟出exception，呼叫ExceptionHandler()來處理
     }
 
-    //DEBUG(dbgAddr, "Initializing address space: " << numPages << ", " << size);
-    pageTable = new TranslationEntry[numPages];
-
-    for(int i = 0; i < numPages; i++) {
-        int j = 0;  // j is the index of the physical page
-        pageTable[i].virtualPage = i;
-        while(j < NumPhysPages && kernel->usedPhysPage[j]) {    // find a free frame
+    pageTable = new TranslationEntry[numPages];  // 根據numPages來創建pageTable
+    //初始化pageTable entry
+    for(unsigned int i = 0; i < numPages; i++)  // j 是用來找尋可以用的physical frame，每次都要從頭找，因為可能會有其他thread釋放掉physical frame，散落在其他前面
+    {
+        pageTable[i].virtualPage = i;  // 設定virtual page number，即page table的index
+        unsigned int j = 0; // 代表physical frame number
+        while(j < NumPhysPages && usedPhyPage[j] == true) //找尋可以用的physical frame
+        {
             j++;
         }
-        kernel->usedPhysPage[j] = true;  // mark the frame as used
-        kernel->freeFrameNum--;  // decrease the number of free frames
+        usedPhyPage[j] = true; // 將這個physical frame設為true，表示已經被使用
+        freeFrameNum--;        // 減掉這個free frame數量
 
-        bzero(&(kernel->machine->mainMemory[j * PageSize]), PageSize);  // zero out the frame
+        // 初始化在main meory裡被分配到的frame，利用bzero()將這個frame的內容設為0
+        bzero(&(kernel->machine->mainMemory[j * PageSize]), PageSize); // (j * PageSize)是這個frame在main memory的base address
 
-        pageTable[i].physicalPage = j;
-        pageTable[i].valid = TRUE;
-        pageTable[i].use = FALSE;
-        pageTable[i].dirty = FALSE;
-        pageTable[i].readOnly = FALSE;
+        pageTable[i].physicalPage = j; //將這個frame number分配給virtual page
+        pageTable[i].valid = true; //將valid設為true
+        pageTable[i].use = false;      //其餘設為false
+        pageTable[i].dirty = false;
+        pageTable[i].readOnly = false;
     }
 
-    // then, copy in the code and data segments into memory
-    // Now support multiprogramming (MP2)
-    unsigned int codePaddr, initDataPaddr, readonlyDataPaddr;
-    Translate(noffH.code.virtualAddr, &codePaddr, 1);
-    Translate(noffH.initData.virtualAddr, &initDataPaddr, 1);
-    Translate(noffH.uninitData.virtualAddr, &readonlyDataPaddr, 0);
+    size = numPages * PageSize;
 
+    ASSERT(numPages <= NumPhysPages);  // check we're not trying
+                                       // to run anything too big --
+                                       // at least until we have
+                                       // virtual memory
+
+    DEBUG(dbgAddr, "Initializing address space: " << numPages << ", " << size);
+
+    // then, copy in the code and data segments into memory
+    // Note: this code assumes that virtual address = physical address
     if (noffH.code.size > 0) {
         DEBUG(dbgAddr, "Initializing code segment.");
         DEBUG(dbgAddr, noffH.code.virtualAddr << ", " << noffH.code.size);
         executable->ReadAt(
-            &(kernel->machine->mainMemory[codePaddr]),
+            &(kernel->machine->mainMemory[pageTable[noffH.code.virtualAddr / PageSize].physicalPage * PageSize + (noffH.code.virtualAddr % PageSize)]),
             noffH.code.size, noffH.code.inFileAddr);
     }
     if (noffH.initData.size > 0) {
         DEBUG(dbgAddr, "Initializing data segment.");
         DEBUG(dbgAddr, noffH.initData.virtualAddr << ", " << noffH.initData.size);
         executable->ReadAt(
-            &(kernel->machine->mainMemory[initDataPaddr]),
+            &(kernel->machine->mainMemory[pageTable[noffH.initData.virtualAddr / PageSize].physicalPage * PageSize + (noffH.initData.virtualAddr % PageSize)]),
             noffH.initData.size, noffH.initData.inFileAddr);
     }
 
@@ -184,7 +197,7 @@ bool AddrSpace::Load(char *fileName) {
         DEBUG(dbgAddr, "Initializing read only data segment.");
         DEBUG(dbgAddr, noffH.readonlyData.virtualAddr << ", " << noffH.readonlyData.size);
         executable->ReadAt(
-            &(kernel->machine->mainMemory[readonlyDataPaddr]),
+            &(kernel->machine->mainMemory[pageTable[noffH.readonlyData.virtualAddr / PageSize].physicalPage * PageSize + (noffH.readonlyData.virtualAddr % PageSize)]),
             noffH.readonlyData.size, noffH.readonlyData.inFileAddr);
     }
 #endif

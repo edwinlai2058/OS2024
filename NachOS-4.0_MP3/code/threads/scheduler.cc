@@ -32,6 +32,12 @@
 
 Scheduler::Scheduler() {
     readyList = new List<Thread *>;
+
+    // MP3
+    L1 = new List<Thread *>;  // Preemptive SJF
+    L2 = new List<Thread *>;  // Non-preemptive Priority
+    L3 = new List<Thread *>;  // Round Robin
+
     toBeDestroyed = NULL;
 }
 
@@ -42,6 +48,11 @@ Scheduler::Scheduler() {
 
 Scheduler::~Scheduler() {
     delete readyList;
+
+    // MP3
+    delete L1;
+    delete L2;
+    delete L3;
 }
 
 //----------------------------------------------------------------------
@@ -56,8 +67,26 @@ void Scheduler::ReadyToRun(Thread *thread) {
     ASSERT(kernel->interrupt->getLevel() == IntOff);
     DEBUG(dbgThread, "Putting thread on ready list: " << thread->getName());
     // cout << "Putting thread on ready list: " << thread->getName() << endl ;
+
+    thread->UpdateRemainBurstTime();
     thread->setStatus(READY);
-    readyList->Append(thread);
+    //cout << "Thread Priority: " << thread->getPriority() << endl;
+    //readyList->Append(thread);
+
+    // MP3
+    // Stop accumulating T when the thread becomes ready state (2-1 (f))
+
+    if (thread->getPriority() >= 100) {
+        addToQueue(thread, L1, 1);
+    } else if (thread->getPriority() >= 50 && thread->getPriority() <= 99) {
+        addToQueue(thread, L2, 2);
+    } else {
+        addToQueue(thread, L3, 3);
+    }
+    thread->setStartAgingTick(kernel->stats->totalTicks);
+    
+
+
 }
 
 //----------------------------------------------------------------------
@@ -72,10 +101,56 @@ Thread *
 Scheduler::FindNextToRun() {
     ASSERT(kernel->interrupt->getLevel() == IntOff);
 
-    if (readyList->IsEmpty()) {
+    // if (readyList->IsEmpty()) {
+    //     return NULL;
+    // } else {
+    //     return readyList->RemoveFront();
+    // }
+
+    // MP3
+    Thread *pickedThread = NULL;
+    ListIterator<Thread *> *it;
+    if (!L1->IsEmpty()) {   // Preemptive SJF
+        pickedThread = L1->Front();
+        it = new ListIterator<Thread *>(L1);
+        while(!it->IsDone()) {
+            Thread *t = it->Item();
+            if (t->getRemainBurstTime() == pickedThread->getRemainBurstTime()) {
+                if (t->getID() < pickedThread->getID()) {
+                    pickedThread = t;
+                }
+            } else if (t->getRemainBurstTime() < pickedThread->getRemainBurstTime()) {
+                //cout << "Thread" << t->getID() << " : t_i - T = " << t->getRemainBurstTime() << ", ";
+                //cout << "Thread" << pickedThread->getID()  << " : t_i - T = " << pickedThread->getRemainBurstTime() << endl;
+                pickedThread = t;
+            }
+            it->Next();
+        }
+        return removeFromQueue(pickedThread, L1, 1);
+    }
+    else if (!L2->IsEmpty()) {  // Non-preemptive Priority
+        pickedThread = L2->Front();
+        it = new ListIterator<Thread *>(L2);
+        while(!it->IsDone()) {
+            Thread *t = it->Item();
+            if (t->getPriority() == pickedThread->getPriority()) {
+                if (t->getID() < pickedThread->getID()) {
+                    pickedThread = t;
+                }
+            } else if (t->getPriority() > pickedThread->getPriority()) {
+                pickedThread = t;
+            }
+            it->Next();
+        }
+        return removeFromQueue(pickedThread, L2, 2);
+    }
+    else if (!L3->IsEmpty()) {  // Round Robin
+        pickedThread = L3->Front();
+        return removeFromQueue(pickedThread, L3, 3);
+    }
+    else {
+        //cout << "No thread in ready queue" << endl;
         return NULL;
-    } else {
-        return readyList->RemoveFront();
     }
 }
 
@@ -117,6 +192,11 @@ void Scheduler::Run(Thread *nextThread, bool finishing) {
     kernel->currentThread = nextThread;  // switch to the next thread
     nextThread->setStatus(RUNNING);      // nextThread is now running
 
+    // MP3
+    // Resume accumulating T when the thread moves back to the running state. (2-1 (f))
+    nextThread->UpdateInitRunningTick();
+    DEBUG(dbgScheduler, "[E] Tick [" << kernel->stats->totalTicks << "]: Thread [" << nextThread->getID() << "] is now selected for execution, thread [" << oldThread->getID() << "] is replaced, and it has executed [" << kernel->stats->totalTicks - oldThread->getInitRunningTick() << "] ticks");
+
     DEBUG(dbgThread, "Switching from: " << oldThread->getName() << " to: " << nextThread->getName());
 
     // This is a machine-dependent assembly language routine defined
@@ -127,6 +207,7 @@ void Scheduler::Run(Thread *nextThread, bool finishing) {
     SWITCH(oldThread, nextThread);
 
     // we're back, running oldThread
+    oldThread->UpdateInitRunningTick();
 
     // interrupts are off when we return from switch!
     ASSERT(kernel->interrupt->getLevel() == IntOff);
@@ -166,4 +247,45 @@ void Scheduler::CheckToBeDestroyed() {
 void Scheduler::Print() {
     cout << "Ready list contents:\n";
     readyList->Apply(ThreadPrint);
+}
+
+// MP3
+void Scheduler::addToQueue(Thread *thread, List<Thread *> *queue, int queueLevel) {
+    queue->Append(thread);
+    //thread->setStartAgingTick(kernel->stats->totalTicks); // 設定thread進入ready queue的tick
+    thread->setQueueLevel(queueLevel);
+    DEBUG('z', "[A] Tick [" << kernel->stats->totalTicks << "]: Thread [" << thread->getID() << "] is inserted into queue L[" << queueLevel << "]" );
+}
+
+Thread *Scheduler::removeFromQueue(Thread* thread, List<Thread *> *queue, int queueLevel) {
+    queue->Remove(thread);
+    DEBUG('z', "[B] Tick [" << kernel->stats->totalTicks << "]: Thread [" << thread->getID() << "] is removed from queue L[" << queueLevel << "]" );
+    return thread;
+}
+
+void Scheduler::UpdateThreadAging() {
+    UpdateAgeInQueue(L1, 1);
+    UpdateAgeInQueue(L2, 2);
+    UpdateAgeInQueue(L3, 3);
+}
+
+void Scheduler::UpdateAgeInQueue(List<Thread*>* queue, int queueLevel){
+    ListIterator<Thread*> iter(queue);
+    while(!iter.IsDone()){
+        Thread* currentThread = iter.Item();
+        //currentThread->UpdateAgingTime();
+        //currentThread->setStartAgingTick(kernel->stats->totalTicks);
+        currentThread->UpdatePriority();
+        iter.Next();
+
+        int updatePriority = currentThread->getPriority();
+        if(queueLevel == 2 && updatePriority >= 100){
+            removeFromQueue(currentThread, L2, 2);
+            addToQueue(currentThread, L1, 1);
+        }
+        else if(queueLevel == 3 && updatePriority >= 50){
+            removeFromQueue(currentThread, L3, 3);
+            addToQueue(currentThread, L2, 2);
+        }
+    }
 }

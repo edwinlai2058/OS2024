@@ -5,11 +5,10 @@ int main(void) {
     int success = Create("file1.test");
     OpenFileId fid;
     int i;
-/*
     if (success != 1)
         MSG("Failed on creating file");
-    fid = Open("file1.test");
 
+    fid = Open("file1.test");
     if (fid < 0)
         MSG("Failed on opening file");
 
@@ -23,6 +22,6 @@ int main(void) {
     if (success != 1)
         MSG("Failed on closing file");
     MSG("Success on creating file1.test");
-*/
+
     Halt();
 }

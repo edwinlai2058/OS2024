@@ -37,7 +37,7 @@ class Kernel {
                         // from constructor because
                         // refers to "kernel" as a global
     void ExecAll();
-    int Exec(char *name);
+    int Exec(char *name, int priority);  // (MP3)
     void ThreadSelfTest();  // self test of threads and synchronization
 
     void ConsoleTest();  // interactive console self test
@@ -80,6 +80,10 @@ class Kernel {
     Thread *t[10];
     char *execfile[10];
     int execfileNum;
+
+    // (MP3)
+    int execPriority[10];
+
     int threadNum;
     bool randomSlice;    // enable pseudo-random time slicing
     bool debugUserProg;  // single step user program
