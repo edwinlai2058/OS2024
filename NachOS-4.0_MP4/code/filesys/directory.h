@@ -42,7 +42,7 @@ public:
     char name[FileNameMaxLen + 1]; // Text name for file, with +1 for
                                    // the trailing '\0'
     // MP4 add
-    bool isDir; //是否是directory
+    bool isDirec; //是否是directory
 };
 
 // The following class defines a UNIX-like "directory".  Each entry in
@@ -68,8 +68,8 @@ public:
 
     int Find(char *name); // Find the sector number of the FileHeader for file: "name"
 
-    // Add isDir variable (MP4)
-    bool Add(char *name, int newSector, bool isDir); // Add a file name into the directory
+    // MP4 add，增加傳入isDir變數來初始化directory entry
+    bool Add(char *name, int newSector, bool isDirec); // Add a file name into the directory
 
     bool Remove(char *name); // Remove a file from the directory
 
@@ -78,14 +78,13 @@ public:
                   //  of the directory -- all the file
                   //  names and their contents.
                   
-    // MP4
-    void RecursiveList(int level);          // print the directory recursively
-    int GetDirSector(char* dirPath);    // return the sector number of the directory
-
-    // for Recursive Remove (-rr)
-    bool isDir(char* fileName);                 // return whether the file is a directory
-    int GetTableSize() {return tableSize;}      // return tableSize
-    DirectoryEntry* GetTable() {return table;}  // return table
+    // MP4 add
+    void RecursiveList(int level);          // recursuve地印出所有directory裡內容
+    int GetDirecSector(char* direcPath);    // 回傳絕對路徑最後的directory所在的sector
+    // recursive remove會用到的
+    bool IsDirec(char* fileName); //看此entry是否是directory
+    int GetTableSize() {return tableSize;} // 回傳table的entry數量
+    DirectoryEntry* GetTable() {return table;} //回傳table
 
 private:
     /*

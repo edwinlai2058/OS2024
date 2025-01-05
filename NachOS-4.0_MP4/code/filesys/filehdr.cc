@@ -343,7 +343,6 @@ void FileHeader::Print()
 	delete[] data;
 }
 
-// For MP4 bonus2
 int FileHeader::CountHeaders() {
     int count = 1; // Count the current header
 

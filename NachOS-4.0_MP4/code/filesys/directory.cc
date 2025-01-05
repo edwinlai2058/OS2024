@@ -125,7 +125,7 @@ int Directory::Find(char *name)
 //	"newSector" -- the disk sector containing the added file's header
 //----------------------------------------------------------------------
 
-bool Directory::Add(char *name, int newSector, bool isDir)
+bool Directory::Add(char *name, int newSector, bool isDirec)
 {
     if (FindIndex(name) != -1)
         return FALSE;
@@ -135,7 +135,8 @@ bool Directory::Add(char *name, int newSector, bool isDir)
             table[i].inUse = TRUE;
             strncpy(table[i].name, name, FileNameMaxLen);
             table[i].sector = newSector;
-            table[i].isDir = isDir; // MP4
+            // MP4 add
+            table[i].isDirec = isDirec; // 初始化 isDirec
 
             return TRUE;
         }
@@ -200,50 +201,54 @@ void Directory::Print()
 void Directory::RecursiveList(int level)
 {
     Directory* subDirectory = new Directory(NumDirEntries);
-
-    for(int i = 0; i < tableSize; i++) {
-        if(table[i].inUse) {
-            for(int j = 0; j < level; j++) printf("    "); // indent
-            printf("[%c] %s\n", (table[i].isDir == true ? 'D' : 'F'), table[i].name);
-            if(table[i].isDir) {
-                // recursive call
-                OpenFile *dir = new OpenFile(table[i].sector); 
-                subDirectory->FetchFrom(dir);
-                subDirectory->RecursiveList(level + 1);
-                delete dir;
+    // 開始遍歷directory裡的entry
+    for(int i = 0; i < tableSize; i++)
+    {
+        if(table[i].inUse)
+        {
+            for(int j = 0; j < level; j++) printf("    "); // 依照spec規定空四格
+            printf("[%c] %s\n", (table[i].isDirec == true) ? 'D' : 'F',table[i].name);
+            if(table[i].isDirec)
+            {
+                // 從file header所在的sector讀進directory資料
+                OpenFile *file = new OpenFile(table[i].sector); 
+                subDirectory->FetchFrom(file);
+                subDirectory->RecursiveList(level + 1); //遞迴呼叫
+                delete file;
             }
         }
     }
     delete subDirectory;
 }
 
-int Directory::GetDirSector(char* dirPath) {
-    if(!strcmp("/", dirPath)) return 1; // root directory's fileHeader is in sector 1
-
-    int index = 1; // skip the first '/'
-    while(dirPath[index] != '/' && dirPath[index] != '\0') index++;
+int Directory::GetDirecSector(char* direcPath)
+{
+    if(!strcmp("/", direcPath)) return 1; //代表是根目錄，root directory存在sector 1
+    int index = 1; // 從第二個字('/'的下一個)開始找directory
+    while(direcPath[index] != '/' && direcPath[index] != '\0') index++;
 
     char dir[DirectoryNameMaxLen + 1];
-    strncpy(dir, dirPath + 1, index - 1); // copy the directory name
-    dir[index - 1] = '\0';
+    strncpy(dir, direcPath + 1, index - 1); //只需複製directory名字就好
+    dir[index - 1] = '\0'; //在結尾補上'\0'
 
-    int dir_sector = Find(dir); // find the directory in the current directory
+    int direc_sector = Find(dir); //去找去找dir的fileHeader所在的sector
     int sector_we_want = -1;
-    if(dirPath[index] != '\0') {
+    if(direcPath[index] != '\0') //代表後面還有路徑要找
+    {
         Directory* directory = new Directory(NumDirEntries);
-        OpenFile* file = new OpenFile(dir_sector);
+        OpenFile* file = new OpenFile(direc_sector);
         directory->FetchFrom(file);
-        sector_we_want = directory->GetDirSector(dirPath + index);
-
+        sector_we_want = directory->GetDirecSector(direcPath + index); //遞迴呼叫，繼續往下找
         delete directory;
         delete file;
     }
-    else sector_we_want = dir_sector;
+    else sector_we_want = direc_sector;
 
     return sector_we_want;
 }
 
-bool Directory::isDir(char* fileName) {
+bool Directory::IsDirec(char* fileName)
+{
     int index = FindIndex(fileName);
-    return table[index].isDir;
+    return table[index].isDirec;
 }

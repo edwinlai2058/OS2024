@@ -58,7 +58,7 @@ public:
 
 	void Print(); // Print the contents of the file.
 
-	int CountHeaders(); // Count the number of headers in the file (MP4 bonus2)
+	int CountHeaders(); // Count the number of headers in the file
 
 private:
 	/*

@@ -100,13 +100,13 @@ public:
 	bool Remove(char *name, bool recursive); // Delete a file (UNIX unlink)
 
 	// MP4 add
-	void List(char* dirPath); // List all the files in the file system
+	void List(char* direcPath); // List all the files in the file system
 
 	void Print(); // List all the files and their contents
 
 	// MP4 add
 	bool CreateDirectory(char* name);
-	void RecursiveList(char* dirPath);
+	void RecursiveList(char* direcPath);
 
 private:
 	OpenFile *freeMapFile;	 // Bit map of free disk blocks,

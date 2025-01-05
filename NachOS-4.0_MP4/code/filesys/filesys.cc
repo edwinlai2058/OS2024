@@ -192,12 +192,11 @@ bool FileSystem::Create(char *name, int initialSize)
     FileHeader *hdr;
     int sector;
     bool success;
-
-    // MP4
-    OpenFile* file;     // final directory file
-    Directory* root;    // root directory
-    int direcSector;    // final directory file's sector
-    char dirPath[256], fileName[10];
+    // MP4 add
+    OpenFile* file; //用來開啟最終directory的file header
+    Directory* root; //存根目錄
+    int direcSector; //最終directory的fileHeader所在的sector
+    char dirPath[256], fileName[10]; //size多加一，來存'\0'在最後
 
     SplitPath(name, dirPath, fileName); //進行拆解動作
 
@@ -207,7 +206,7 @@ bool FileSystem::Create(char *name, int initialSize)
     root = new Directory(NumDirEntries);
     directory = new Directory(NumDirEntries);
     root->FetchFrom(directoryFile); //將root directory讀進來
-    direcSector = root->GetDirSector(dirPath); //找到最終directory的sector
+    direcSector = root->GetDirecSector(dirPath); //找到最終directory的sector
     file = new OpenFile(direcSector); //開啟最終directory檔案
     directory->FetchFrom(file); //把directory抓進來
 
@@ -219,7 +218,7 @@ bool FileSystem::Create(char *name, int initialSize)
         sector = freeMap->FindAndSet(); // find a sector to hold the file header
         if (sector == -1)
             success = FALSE; // no free block for file header
-        else if (!directory->Add(fileName, sector, FALSE)) //此為file，isDir是FALSE
+        else if (!directory->Add(fileName, sector, FALSE)) //此為file，isDirec是FALSE
             success = FALSE; // no space in directory
         else
         {
@@ -263,7 +262,7 @@ OpenFile * FileSystem::Open(char *name)
     DEBUG(dbgFile, "Opening file" << name);
     directory->FetchFrom(directoryFile);
     // MP4 add
-    sector = directory->GetDirSector(name); //傳入的路徑有可能是多層的
+    sector = directory->GetDirecSector(name); //傳入的路徑有可能是多層的
     if (sector >= 0)
         openFile = new OpenFile(sector); // name was found in directory
     delete directory;
@@ -326,7 +325,7 @@ bool FileSystem::Remove(char *name , bool recursive)
     root = new Directory(NumDirEntries);
     directory = new Directory(NumDirEntries);
     root->FetchFrom(directoryFile);
-    direcSector = root->GetDirSector(dirPath);
+    direcSector = root->GetDirecSector(dirPath);
     file = new OpenFile(direcSector);
     directory->FetchFrom(file);
 
@@ -334,8 +333,8 @@ bool FileSystem::Remove(char *name , bool recursive)
 
     if (recursive)
     {
-        bool isDir = directory->isDir(fileName); // 看看要刪除的entry是不是directory
-        if(isDir)
+        bool isDirec = directory->IsDirec(fileName); // 看看要刪除的entry是不是directory
+        if(isDirec)
         {
             //開啟要刪除的directory，並遞迴呼叫Remove()，來刪除其table裡的entry
             OpenFile* f = new OpenFile(sector); 
@@ -384,14 +383,14 @@ bool FileSystem::Remove(char *name , bool recursive)
 // 	List all the files in the file system directory.
 //----------------------------------------------------------------------
 
-void FileSystem::List(char* dirPath)
+void FileSystem::List(char* direcPath)
 {
     // MP4 add
     Directory* root = new Directory(NumDirEntries);
     Directory* directoryToBeList = new Directory(NumDirEntries);
 
     root->FetchFrom(directoryFile);
-    int sector = root->GetDirSector(dirPath); //找到目標directory所在的sector
+    int sector = root->GetDirecSector(direcPath); //找到目標directory所在的sector
     OpenFile* file = new OpenFile(sector);
     directoryToBeList->FetchFrom(file);
     directoryToBeList->List(); //開始遍歷去list
@@ -459,7 +458,7 @@ bool FileSystem::CreateDirectory(char* name)
     root = new Directory(NumDirEntries);
     directory = new Directory(NumDirEntries);
     root->FetchFrom(directoryFile); //將root directory讀進來
-    direcSector = root->GetDirSector(dirPath); //找到最終directory的sector
+    direcSector = root->GetDirecSector(dirPath); //找到最終directory的sector
     file = new OpenFile(direcSector); //開啟最終directory檔案
     directory->FetchFrom(file); //把directory抓進來
 
@@ -471,7 +470,7 @@ bool FileSystem::CreateDirectory(char* name)
         sector = freeMap->FindAndSet(); // find a sector to hold the file header
         if (sector == -1)
             success = FALSE; // no free block for file header
-        else if (!directory->Add(fileName, sector, TRUE)) //此為file，isDir是FALSE
+        else if (!directory->Add(fileName, sector, TRUE)) //此為file，isDirec是FALSE
             success = FALSE; // no space in directory
         else
         {
@@ -500,12 +499,12 @@ bool FileSystem::CreateDirectory(char* name)
     return success;
 }
 
-void FileSystem::RecursiveList(char* dirPath)
+void FileSystem::RecursiveList(char* direcPath)
 {
     Directory* root = new Directory(NumDirEntries);
     Directory* directoryToBeList = new Directory(NumDirEntries);
     root->FetchFrom(directoryFile);
-    int sector = root->GetDirSector(dirPath); //找到目標directory所在的sector
+    int sector = root->GetDirecSector(direcPath); //找到目標directory所在的sector
     OpenFile* file = new OpenFile(sector);
     directoryToBeList->FetchFrom(file);
     directoryToBeList->RecursiveList(0); //從第0層(自己)開始遍歷去list
